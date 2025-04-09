@@ -21,6 +21,6 @@ updates:
       - "github.com/prometheus/*"
   open-pull-requests-limit: 20
 - package-ecosystem: "docker"
-  directory : "/"
+  directory: "/"
   schedule:
     interval: "monthly"
