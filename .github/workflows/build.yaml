@@ -36,7 +36,8 @@ jobs:
       matrix:
         component:
         - name: qubership-network-latency-exporter
-          file: ./Dockerfile
+          file: Dockerfile
+          context: .
     runs-on: ubuntu-latest
     name: ${{ matrix.component.name }}
     steps:
