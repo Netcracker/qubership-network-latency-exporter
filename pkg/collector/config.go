@@ -4,10 +4,10 @@ import (
 	"context"
 	"sync"
 
+	"log/slog"
+
 	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
 	"github.com/Netcracker/network-latency-exporter/pkg/model"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/pkg/errors"
 )
 
@@ -22,10 +22,10 @@ type Container struct {
 	Exporter         *Exporter
 	CollectorConfigs map[string]interface{}
 	once             sync.Once
-	logger           log.Logger
+	logger           *slog.Logger
 }
 
-func NewConfigContainer(latencyTypes []string, namespace string, logger log.Logger) *Container {
+func NewConfigContainer(latencyTypes []string, namespace string, logger *slog.Logger) *Container {
 	configHolder := &Container{
 		ExporterConfig: &ExporterConfig{
 			LatencyTypes: latencyTypes,
@@ -54,7 +54,7 @@ func (c *Container) UpdateTargets(ctx context.Context, targets metrics.PingHostL
 			return
 		}
 	}
-	_ = level.Info(c.Exporter.logger).Log("msg", "Updated targets")
+	c.Exporter.logger.Info("Updated targets")
 }
 
 func (c *Container) Initialize(ctx context.Context, packetsSent string, packetSize string, probeTimeout string, checkTargets []*metrics.CheckTarget, targets metrics.PingHostList, metricsPath string) (err error) {

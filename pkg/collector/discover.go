@@ -2,12 +2,10 @@ package collector
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 
 	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
 	"github.com/Netcracker/network-latency-exporter/pkg/utils"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -29,12 +27,12 @@ func getClusterNodes() ([]corev1.Node, error) {
 	return nodes.Items, nil
 }
 
-func Discover(logger log.Logger) *metrics.PingHostList {
+func Discover(logger *slog.Logger) *metrics.PingHostList {
 	if utils.GetEnvWithDefaultValue("DISCOVER_ENABLE", "true") == "true" {
-		_ = level.Debug(logger).Log("msg", "Discovering cluster nodes as ping targets")
+		logger.Debug("Discovering cluster nodes as ping targets")
 		rawNodes, err := getClusterNodes()
 		if err != nil {
-			_ = level.Debug(logger).Log("msg", fmt.Sprintf("Error getting cluster nodes: %v", err))
+			logger.Debug("Error getting cluster nodes", "err", err)
 			return nil
 		}
 
@@ -56,14 +54,14 @@ func Discover(logger log.Logger) *metrics.PingHostList {
 			if nodeAddress != "" {
 				// Skip current node
 				if nodeName != utils.GetEnvWithDefaultValue("NODE_NAME", "localhost") {
-					_ = level.Debug(logger).Log("msg", fmt.Sprintf("Discovered node: {ipAddress: %s, name: %s}", nodeAddress, nodeName))
+					logger.Debug("Discovered node", "ipAddress", nodeAddress, "name", nodeName)
 					targets.Targets = append(targets.Targets, metrics.PingHost{IPAddress: nodeAddress, Name: nodeName})
 				}
 			}
 		}
 		return targets
 	} else {
-		_ = level.Info(logger).Log("msg", "Skip discovering. Script disabled.")
+		logger.Info("Skip discovering. Script disabled.")
 		return nil
 	}
 }

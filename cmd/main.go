@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -16,12 +16,9 @@ import (
 	"github.com/Netcracker/network-latency-exporter/pkg/utils"
 
 	"github.com/alecthomas/kingpin/v2"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	versionCollector "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/promlog"
-	"github.com/prometheus/common/promlog/flag"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
 	webflag "github.com/prometheus/exporter-toolkit/web/kingpinflag"
@@ -30,6 +27,29 @@ import (
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
+
+// slogToKitLogger adapts slog.Logger to go-kit/log.Logger
+type slogToKitLogger struct {
+	*slog.Logger
+}
+
+func (l *slogToKitLogger) Log(keyvals ...interface{}) error {
+	if len(keyvals) == 0 {
+		return nil
+	}
+	msg, ok := keyvals[0].(string)
+	if !ok {
+		msg = ""
+	}
+	args := make([]any, 0, len(keyvals)-1)
+	for i := 1; i < len(keyvals); i += 2 {
+		if i+1 < len(keyvals) {
+			args = append(args, keyvals[i], keyvals[i+1])
+		}
+	}
+	l.Info(msg, args...)
+	return nil
+}
 
 func init() {
 	prometheus.MustRegister(versionCollector.NewCollector("network_latency_exporter"))
@@ -53,21 +73,23 @@ func main() {
 		).Default("40").Int()
 	)
 
-	promLogConfig := &promlog.Config{}
-	flag.AddFlags(kingpin.CommandLine, promLogConfig)
 	kingpin.Version(version.Print("network_latency_exporter"))
 	kingpin.CommandLine.UsageWriter(os.Stdout)
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
-	logger := promlog.New(promLogConfig)
 
-	_ = os.Setenv("LOG_LEVEL", promLogConfig.Level.String())
+	// Create a new slog logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
-	_ = level.Info(logger).Log("msg", fmt.Sprintf("Starting network_latency_exporter: %s", version.Info()))
-	_ = level.Info(logger).Log("msg", fmt.Sprintf("Build context: %s", version.BuildContext()))
+	_ = os.Setenv("LOG_LEVEL", "info")
+
+	logger.Info("Starting network_latency_exporter", "version", version.Info())
+	logger.Info("Build context", "context", version.BuildContext())
 
 	namespace := utils.GetNamespace()
-	_ = level.Info(logger).Log("msg", fmt.Sprintf("Namespace: %s", namespace))
+	logger.Info("Namespace", "namespace", namespace)
 
 	baseCtx, cancel := context.WithCancel(context.Background())
 	ctx := context.WithValue(baseCtx, collector.ContextKey, "main")
@@ -86,7 +108,7 @@ func main() {
 			checkTarget.Protocol = protocolAndPort[0]
 			checkTarget.MtrKey = protocolAsFlag
 		} else {
-			_ = level.Warn(logger).Log("msg", fmt.Sprintf("Skip incorrect or unsupported protocol %s", p))
+			logger.Warn("Skip incorrect or unsupported protocol", "protocol", p)
 			continue
 		}
 		if len(protocolAndPort) == 2 {
@@ -103,17 +125,17 @@ func main() {
 		latencies := strings.Split(latencyTypes, ",")
 		cfgCont := collector.NewConfigContainer(latencies, namespace, logger)
 		if err := cfgCont.Initialize(ctx, packetsSent, packetSize, probeTimeout, checkTargets, *targets, *metricsPath); err != nil {
-			_ = level.Error(logger).Log("msg", "Initialization failed", "err", err)
+			logger.Error("Initialization failed", "err", err)
 			os.Exit(1)
 		}
 
 		var enabledCollectors []collector.Collector
 		for collectorName, enabled := range collector.GetCollectorStates() {
 			if _, found := cfgCont.CollectorConfigs[string(collector.AsType(collectorName))]; found && enabled {
-				_ = level.Info(logger).Log("msg", fmt.Sprintf("Collector enabled from main: %s", collectorName))
+				logger.Info("Collector enabled from main", "collector", collectorName)
 				c, err := collector.GetCollector(collectorName, logger)
 				if err != nil {
-					_ = level.Error(logger).Log("msg", fmt.Sprintf("Couldn't get collector: %s", collectorName), "err", err)
+					logger.Error("Couldn't get collector", "collector", collectorName, "err", err)
 					continue
 				}
 				enabledCollectors = append(enabledCollectors, c)
@@ -124,7 +146,7 @@ func main() {
 			if cfg := cfgCont.GetConfig(ctx, coll.Type()); cfg != nil {
 				err := coll.Initialize(ctx, cfg)
 				if err != nil {
-					_ = level.Error(logger).Log("msg", fmt.Sprintf("Can't initialize collector: %s", coll.Name()), "err", err)
+					logger.Error("Can't initialize collector", "collector", coll.Name(), "err", err)
 				}
 			}
 		}
@@ -133,7 +155,7 @@ func main() {
 
 		watcher, err := clientSet.CoreV1().Nodes().Watch(context.TODO(), metav1.ListOptions{})
 		if err != nil {
-			_ = level.Error(logger).Log("msg", err.Error())
+			logger.Error("Failed to create node watcher", "err", err)
 			syscall.Exit(1)
 		}
 
@@ -152,7 +174,7 @@ func main() {
 		err = prometheus.Register(exporter)
 		if err != nil {
 			if !prometheus.Unregister(exporter) {
-				_ = level.Error(logger).Log("msg", "Exporter can't be unregistered")
+				logger.Error("Exporter can't be unregistered")
 				return
 			}
 			prometheus.MustRegister(exporter)
@@ -179,18 +201,17 @@ func main() {
 			timeout: 30 * time.Second,
 		}
 		go sd.listen()
-		_ = level.Info(logger).Log("msg", fmt.Sprintf("Starting server on address %s", srv.Addr))
-		exit := web.ListenAndServe(srv, webConfig, logger)
+		logger.Info("Starting server", "address", srv.Addr)
+		exit := web.ListenAndServe(srv, webConfig, &slogToKitLogger{logger})
 
 		cancel()
 		if !errors.Is(exit, http.ErrServerClosed) {
-			_ = level.Error(logger).Log("msg", "Failed to start application", "err", exit)
+			logger.Error("Failed to start application", "err", exit)
 		}
-		_ = level.Info(logger).Log("msg", "Server is shut down")
+		logger.Info("Server is shut down")
 	} else {
-		_ = level.Info(logger).Log("msg", "Discovery is disabled")
+		logger.Info("Discovery is disabled")
 	}
-
 }
 
 func healthChecker() http.Handler {
