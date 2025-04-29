@@ -1,3 +1,4 @@
 .idea/
+build/
 build/_output
-build/_output/bin/network-latency-exporter
+build/network-latency-exporter
