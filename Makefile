@@ -67,7 +67,7 @@ DOCKERFILE=Dockerfile
 
 # Default run without arguments
 .PHONY: all
-all: test build-binary image
+all: test lint build-binary image
 
 # Run only build
 .PHONY: build
@@ -133,6 +133,21 @@ test: unit-test
 unit-test:
 	echo "=> Run Golang unit-tests ..."
 	go test -race $(TEST_RUN_ARGS) $(pkgs) -count=1 -v
+
+##########################
+# Running linter locally #
+##########################
+
+.PHONY: lint
+lint:
+	echo "=> Run linter ..."
+	docker run \
+		-e RUN_LOCAL=true \
+		-e DEFAULT_BRANCH=$(shell git rev-parse --abbrev-ref HEAD) \
+		--env-file .github/super-linter.env \
+		-v ${PWD}:/tmp/lint \
+		--rm \
+		ghcr.io/super-linter/super-linter:slim-v7.3.0
 
 ###################
 # Running locally #
