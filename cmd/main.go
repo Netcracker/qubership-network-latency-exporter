@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -12,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Netcracker/network-latency-exporter/pkg/collector"
+	"github.com/Netcracker/network-latency-exporter/pkg/logger"
 	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
 	"github.com/Netcracker/network-latency-exporter/pkg/utils"
 
@@ -27,29 +27,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
-
-// slogToKitLogger adapts slog.Logger to go-kit/log.Logger
-type slogToKitLogger struct {
-	*slog.Logger
-}
-
-func (l *slogToKitLogger) Log(keyvals ...interface{}) error {
-	if len(keyvals) == 0 {
-		return nil
-	}
-	msg, ok := keyvals[0].(string)
-	if !ok {
-		msg = ""
-	}
-	args := make([]any, 0, len(keyvals)-1)
-	for i := 1; i < len(keyvals); i += 2 {
-		if i+1 < len(keyvals) {
-			args = append(args, keyvals[i], keyvals[i+1])
-		}
-	}
-	l.Info(msg, args...)
-	return nil
-}
 
 func init() {
 	prometheus.MustRegister(versionCollector.NewCollector("network_latency_exporter"))
@@ -78,18 +55,16 @@ func main() {
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
-	// Create a new slog logger
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
+	// Create a new slog logger with configured level and format
+	log := logger.NewLogger()
 
-	_ = os.Setenv("LOG_LEVEL", "info")
+	_ = os.Setenv("LOG_LEVEL", logger.GetLogLevel().String())
 
-	logger.Info("Starting network_latency_exporter", "version", version.Info())
-	logger.Info("Build context", "context", version.BuildContext())
+	log.Info("Starting network_latency_exporter", "version", version.Info())
+	log.Info("Build context", "context", version.BuildContext())
 
 	namespace := utils.GetNamespace()
-	logger.Info("Namespace", "namespace", namespace)
+	log.Info("Namespace", "namespace", namespace)
 
 	baseCtx, cancel := context.WithCancel(context.Background())
 	ctx := context.WithValue(baseCtx, collector.ContextKey, "main")
@@ -108,7 +83,7 @@ func main() {
 			checkTarget.Protocol = protocolAndPort[0]
 			checkTarget.MtrKey = protocolAsFlag
 		} else {
-			logger.Warn("Skip incorrect or unsupported protocol", "protocol", p)
+			log.Warn("Skip incorrect or unsupported protocol", "protocol", p)
 			continue
 		}
 		if len(protocolAndPort) == 2 {
@@ -119,23 +94,23 @@ func main() {
 		checkTargets = append(checkTargets, checkTarget)
 	}
 
-	targets := collector.Discover(logger)
+	targets := collector.Discover(log)
 	if targets != nil {
-		targets = utils.ValidateTargets(logger, targets)
+		targets = utils.ValidateTargets(log, targets)
 		latencies := strings.Split(latencyTypes, ",")
-		cfgCont := collector.NewConfigContainer(latencies, namespace, logger)
+		cfgCont := collector.NewConfigContainer(latencies, namespace, log)
 		if err := cfgCont.Initialize(ctx, packetsSent, packetSize, probeTimeout, checkTargets, *targets, *metricsPath); err != nil {
-			logger.Error("Initialization failed", "err", err)
+			log.Error("Initialization failed", "err", err)
 			os.Exit(1)
 		}
 
 		var enabledCollectors []collector.Collector
 		for collectorName, enabled := range collector.GetCollectorStates() {
 			if _, found := cfgCont.CollectorConfigs[string(collector.AsType(collectorName))]; found && enabled {
-				logger.Info("Collector enabled from main", "collector", collectorName)
-				c, err := collector.GetCollector(collectorName, logger)
+				log.Info("Collector enabled from main", "collector", collectorName)
+				c, err := collector.GetCollector(collectorName, log)
 				if err != nil {
-					logger.Error("Couldn't get collector", "collector", collectorName, "err", err)
+					log.Error("Couldn't get collector", "collector", collectorName, "err", err)
 					continue
 				}
 				enabledCollectors = append(enabledCollectors, c)
@@ -146,16 +121,16 @@ func main() {
 			if cfg := cfgCont.GetConfig(ctx, coll.Type()); cfg != nil {
 				err := coll.Initialize(ctx, cfg)
 				if err != nil {
-					logger.Error("Can't initialize collector", "collector", coll.Name(), "err", err)
+					log.Error("Can't initialize collector", "collector", coll.Name(), "err", err)
 				}
 			}
 		}
-		exporter := collector.New(ctx, collector.NewMetrics(), enabledCollectors, logger)
+		exporter := collector.New(ctx, collector.NewMetrics(), enabledCollectors, log)
 		cfgCont.Exporter = exporter
 
 		watcher, err := clientSet.CoreV1().Nodes().Watch(context.TODO(), metav1.ListOptions{})
 		if err != nil {
-			logger.Error("Failed to create node watcher", "err", err)
+			log.Error("Failed to create node watcher", "err", err)
 			syscall.Exit(1)
 		}
 
@@ -165,22 +140,22 @@ func main() {
 
 		nw := &nodeWatcher{
 			ctx:    ctx,
-			logger: logger,
+			logger: log,
 		}
 
-		go nw.watch(logger, watcher, cfgCont, ctx)
+		go nw.watch(log, watcher, cfgCont, ctx)
 
 		// register exporter only once
 		err = prometheus.Register(exporter)
 		if err != nil {
 			if !prometheus.Unregister(exporter) {
-				logger.Error("Exporter can't be unregistered")
+				log.Error("Exporter can't be unregistered")
 				return
 			}
 			prometheus.MustRegister(exporter)
 		}
 
-		metricHandlerFunc := collector.MetricHandler(exporter, *maxRequests, logger)
+		metricHandlerFunc := collector.MetricHandler(exporter, *maxRequests, log)
 		http.Handle(*metricsPath, utils.AddHSTSHeader(promhttp.InstrumentMetricHandler(prometheus.DefaultRegisterer, metricHandlerFunc)))
 		http.Handle("/-/ready", utils.AddHSTSHeader(readinessChecker()))
 		http.Handle("/-/healthy", utils.AddHSTSHeader(healthChecker()))
@@ -196,21 +171,21 @@ func main() {
 		}
 		sd := &shutdown{
 			srv:     srv,
-			logger:  logger,
+			logger:  log,
 			ctx:     context.WithValue(context.Background(), collector.ContextKey, "shutdown"),
 			timeout: 30 * time.Second,
 		}
 		go sd.listen()
-		logger.Info("Starting server", "address", srv.Addr)
-		exit := web.ListenAndServe(srv, webConfig, &slogToKitLogger{logger})
+		log.Info("Starting server", "address", srv.Addr)
+		exit := web.ListenAndServe(srv, webConfig, logger.NewKitLogger())
 
 		cancel()
 		if !errors.Is(exit, http.ErrServerClosed) {
-			logger.Error("Failed to start application", "err", exit)
+			log.Error("Failed to start application", "err", exit)
 		}
-		logger.Info("Server is shut down")
+		log.Info("Server is shut down")
 	} else {
-		logger.Info("Discovery is disabled")
+		log.Info("Discovery is disabled")
 	}
 }
 
