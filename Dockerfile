@@ -1,3 +1,4 @@
+# hadolint ignore=DL3018
 # Build the manager binary
 FROM golang:1.24.2-alpine3.21 AS builder
 
