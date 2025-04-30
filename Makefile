@@ -13,11 +13,10 @@ endif
 
 # Directories and files
 BUILD_DIR=build
-OUTPUT_DIR=$(BUILD_DIR)/_output
 
 # Set build version
 ARTIFACT_NAME="qubership-network-latency-exporter"
-VERSION?=0.1.0
+VERSION?=2.7.0
 
 # Detect the build environment, local or Jenkins builder
 BUILD_DATE=$(shell date +"%Y%m%d-%T")
