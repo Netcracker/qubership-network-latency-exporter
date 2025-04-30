@@ -7,6 +7,9 @@
 # - .gitignore
 # - .yamlignore
 
+yaml-files:
+  - 'charts/*'
+
 rules:
   braces:
     min-spaces-inside: 1
