@@ -29,6 +29,28 @@ spec:
             {{- if .Values.extraArgs }}
               {{ toYaml .Values.extraArgs | nindent 12 }}
             {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - NET_RAW
+                - ALL
+          livenessProbe:
+            tcpSocket:
+              port: 9273
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
+          readinessProbe:
+            tcpSocket:
+              port: 9273
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 5
           ports:
             - containerPort: 8125
               protocol: TCP
@@ -83,6 +105,7 @@ spec:
       {{- end }}
       {{- if .Values.securityContext }}
       securityContext:
-        runAsUser: {{ default 0 .Values.securityContext.runAsUser }}
+        runAsNonRoot: true
+        runAsUser: {{ default 1000 .Values.securityContext.runAsUser }}
         fsGroup: {{ default 2000 .Values.securityContext.fsGroup }}
       {{- end }}
