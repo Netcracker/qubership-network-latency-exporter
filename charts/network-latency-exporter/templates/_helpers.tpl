@@ -56,7 +56,7 @@ Return securityContext section for daemonset pods
     {{- toYaml .Values.securityContext | nindent 8 }}
     {{- if not (.Capabilities.APIVersions.Has "apps.openshift.io/v1") }}
       {{- if not .Values.securityContext.runAsUser }}
-        runAsUser: 10001
+        runAsUser: 0
       {{- end }}
       {{- if not .Values.elasticsearch.rollover.securityContext.fsGroup }}
         fsGroup: 2000
