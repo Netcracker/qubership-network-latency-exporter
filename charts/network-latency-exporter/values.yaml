@@ -66,7 +66,7 @@ securityContext: {}
   # Type: integer
   # Mandatory: no
   #
-  # runAsUser: "10001"
+  # runAsUser: "0"
 
   # A special supplemental group that applies to all containers in a pod.
   # Some volume types allow the Kubelet to change the ownership of that volume

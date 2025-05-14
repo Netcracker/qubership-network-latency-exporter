@@ -72,7 +72,7 @@ Return securityContext section for daemonset pods
         type: "RuntimeDefault"
     {{- end }}
   {{- else }}
-       runAsUser: 10001
+       runAsUser: 0
        fsGroup: 2000
        runAsNonRoot: true
     {{- if ge .Capabilities.KubeVersion.Minor "25" }}
