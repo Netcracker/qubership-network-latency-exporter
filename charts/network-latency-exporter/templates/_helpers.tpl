@@ -47,3 +47,86 @@ Image can be found from:
     {{- printf "ghcr.io/netcracker/qubership-network-latency-exporter:main" -}}
   {{- end -}}
 {{- end -}}
+
+{{/*
+Return securityContext section for daemonset pods
+*/}}
+{{- define "daemonset.securityContext" -}}
+  {{- if .Values.securityContext }}
+    {{- toYaml .Values.securityContext | nindent 8 }}
+    {{- if not (.Capabilities.APIVersions.Has "apps.openshift.io/v1") }}
+      {{- if not .Values.securityContext.runAsUser }}
+        runAsUser: 0
+      {{- end }}
+      {{- if not .Values.elasticsearch.rollover.securityContext.fsGroup }}
+        fsGroup: 2000
+      {{- end }}
+    {{- end }}
+    {{- if (eq (.Values.securityContext.runAsNonRoot | toString) "false") }}
+      runAsNonRoot: false
+    {{- else }}
+      runAsNonRoot: true
+    {{- end }}
+    {{- if and (ge .Capabilities.KubeVersion.Minor "25") (not .Values.securityContext.seccompProfile) }}
+      seccompProfile:
+        type: "RuntimeDefault"
+    {{- end }}
+  {{- else }}
+       runAsUser: 0
+       fsGroup: 2000
+       runAsNonRoot: true
+    {{- if ge .Capabilities.KubeVersion.Minor "25" }}
+       seccompProfile:
+         type: "RuntimeDefault"
+    {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{/*
+Return container securityContext section for daemonset pods
+*/}}
+{{- define "daemonset.containerSecurityContext" -}}
+  {{- if ge .Capabilities.KubeVersion.Minor "25" }}
+    {{- if .Values.containerSecurityContext }}
+      {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+    {{- else }}
+           allowPrivilegeEscalation: false
+           readOnlyRootFilesystem: true
+           capabilities:
+             drop:
+               - ALL
+    {{- end }}
+  {{- else }}
+    {{- if .Values.containerSecurityContext }}
+      {{- toYaml .Values.containerSecurityContext | nindent 12 }}
+    {{- else }}
+      {}
+    {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{/*
+Describes the readinessProbe behavior for daemonset
+*/}}
+{{- define "daemonset.readinessProbe" -}}
+readinessProbe:
+  tcpSocket:
+    port: 9273
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 5
+{{- end -}}
+
+{{/*
+Describes the livenessProbe behavior for daemonset
+*/}}
+{{- define "daemonset.livenessProbe" -}}
+livenessProbe:
+  tcpSocket:
+    port: 9273
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 5
+{{- end -}}

@@ -23,47 +23,51 @@ spec:
     spec:
       shareProcessNamespace: true
       containers:
-        - name: {{ include "network-latency-exporter.name" . }}
-          image: {{ template "network-latency-exporter.image" . }}
-          args:
-            {{- if .Values.extraArgs }}
-              {{ toYaml .Values.extraArgs | nindent 12 }}
-            {{- end }}
-          ports:
-            - containerPort: 8125
-              protocol: TCP
-            - containerPort: 8094
-              protocol: TCP
-            - containerPort: 8092
-              protocol: UDP
-            - containerPort: 9273
-              name: metrics
-              protocol: TCP
-          env:
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
-            - name: REQUEST_TIMEOUT
-              value: {{ .Values.requestTimeout | quote }}
-            - name: TIMEOUT
-              value: {{ .Values.timeout }}
-            - name: PACKETS_NUM
-              value: {{ .Values.packetsNum | quote }}
-            - name: PACKET_SIZE
-              value: {{ .Values.packetSize | quote }}
-            - name: CHECK_TARGET
-              value: {{ .Values.checkTarget | quote }}
-            - name: DISCOVER_ENABLE
-              value: {{ default "true" .Values.discoverEnable | quote }}
-            - name: LATENCY_TYPES
-              value: {{ .Values.latencyTypes | quote }}
-            - name: MTR_TIMEOUT
-              value: {{ .Values.mtrTimeout | quote }}
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          terminationMessagePath: /dev/termination-log
-          imagePullPolicy: IfNotPresent
+      - name: {{ include "network-latency-exporter.name" . }}
+        image: {{ template "network-latency-exporter.image" . }}
+        args:
+          {{- if .Values.extraArgs }}
+            {{ toYaml .Values.extraArgs | nindent 12 }}
+          {{- end }}
+        securityContext:
+          {{- include "daemonset.containerSecurityContext" . }}
+        {{- include "daemonset.readinessProbe" . | nindent 8 }}
+        {{- include "daemonset.livenessProbe" . | nindent 8 }}
+        ports:
+        - containerPort: 8125
+          protocol: TCP
+        - containerPort: 8094
+          protocol: TCP
+        - containerPort: 8092
+          protocol: UDP
+        - containerPort: 9273
+          name: metrics
+          protocol: TCP
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: REQUEST_TIMEOUT
+          value: {{ .Values.requestTimeout | quote }}
+        - name: TIMEOUT
+          value: {{ .Values.timeout }}
+        - name: PACKETS_NUM
+          value: {{ .Values.packetsNum | quote }}
+        - name: PACKET_SIZE
+          value: {{ .Values.packetSize | quote }}
+        - name: CHECK_TARGET
+          value: {{ .Values.checkTarget | quote }}
+        - name: DISCOVER_ENABLE
+          value: {{ default "true" .Values.discoverEnable | quote }}
+        - name: LATENCY_TYPES
+          value: {{ .Values.latencyTypes | quote }}
+        - name: MTR_TIMEOUT
+          value: {{ .Values.mtrTimeout | quote }}
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        terminationMessagePath: /dev/termination-log
+        imagePullPolicy: IfNotPresent
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -81,8 +85,5 @@ spec:
       affinity:
         {{- toYaml .Values.affinity | nindent 8 }}
       {{- end }}
-      {{- if .Values.securityContext }}
       securityContext:
-        runAsUser: {{ default 0 .Values.securityContext.runAsUser }}
-        fsGroup: {{ default 2000 .Values.securityContext.fsGroup }}
-      {{- end }}
+        {{- include "daemonset.securityContext" . }}
