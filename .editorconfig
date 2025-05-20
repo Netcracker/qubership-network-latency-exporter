@@ -21,10 +21,7 @@ end_of_line = lf
 eclint_indent_style = unset
 trim_trailing_whitespace = false
 
-[*.json]
-insert_final_newline = false
-
-[{Makefile,go.mod,go.sum,*.go,.gitmodules}]
+[{go.mod,go.sum,*.go,.gitmodules}]
 indent_size = 4
 indent_style = tab
 
