@@ -7,9 +7,6 @@
 # - .gitignore
 # - .yamlignore
 
-yaml-files:
-  - 'charts/*'
-
 rules:
   braces:
     min-spaces-inside: 1
@@ -49,8 +46,9 @@ rules:
   hyphens:
     max-spaces-after: 1
   indentation:
+    level: warning
     spaces: 2
-    indent-sequences: consistent
+    indent-sequences: true
     check-multi-line-strings: false
   key-duplicates: enable
   key-ordering: disable
