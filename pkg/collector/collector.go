@@ -2,8 +2,8 @@ package collector
 
 import (
 	"context"
+	"log/slog"
 
-	"github.com/go-kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	factories      = make(map[string]func(logger log.Logger) (Collector, error))
+	factories      = make(map[string]func(logger *slog.Logger) (Collector, error))
 	collectorState = make(map[string]bool)
 )
 
@@ -40,6 +40,6 @@ func GetCollectorStates() map[string]bool {
 	return collectorState
 }
 
-func GetCollector(name string, logger log.Logger) (Collector, error) {
-	return factories[name](log.With(logger, "depth_caller", log.Caller(4)))
+func GetCollector(name string, logger *slog.Logger) (Collector, error) {
+	return factories[name](logger)
 }

@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -9,8 +8,8 @@ import (
 
 	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
+	"log/slog"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 )
@@ -38,14 +37,16 @@ func GetClientset() (*kubernetes.Clientset, error) {
 	return client, nil
 }
 
-func ValidateTargets(logger log.Logger, targets *metrics.PingHostList) *metrics.PingHostList {
+func ValidateTargets(logger *slog.Logger, targets *metrics.PingHostList) *metrics.PingHostList {
 	res := &metrics.PingHostList{}
 	for _, t := range targets.Targets {
 		if t.IPAddress != "" && net.ParseIP(t.IPAddress) != nil {
 			res.Targets = append(res.Targets, t)
 		} else {
-			_ = level.Warn(logger).Log(fmt.Sprintf("Skip the invalid ping target: {ipAddress: %s, name: %s}. "+
-				"The `ipAddress` should be a non-empty valid IP address", t.IPAddress, t.Name))
+			logger.Warn("Skip the invalid ping target",
+				"ipAddress", t.IPAddress,
+				"name", t.Name,
+				"reason", "The `ipAddress` should be a non-empty valid IP address")
 		}
 	}
 	return res

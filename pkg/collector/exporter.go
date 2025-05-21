@@ -2,16 +2,13 @@ package collector
 
 import (
 	"context"
-	"fmt"
-	stdlog "log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -64,14 +61,14 @@ var _ prometheus.Collector = (*Exporter)(nil)
 // Exporter collects version metrics. It implements prometheus.Collector.
 type Exporter struct {
 	ctx        context.Context
-	logger     log.Logger
+	logger     *slog.Logger
 	Collectors []Collector
 	metrics    Metrics
 	Mutex      sync.RWMutex
 }
 
 // New returns a new exporter.
-func New(ctx context.Context, metrics Metrics, collectors []Collector, logger log.Logger) *Exporter {
+func New(ctx context.Context, metrics Metrics, collectors []Collector, logger *slog.Logger) *Exporter {
 	return &Exporter{
 		ctx:        ctx,
 		logger:     logger,
@@ -80,7 +77,7 @@ func New(ctx context.Context, metrics Metrics, collectors []Collector, logger lo
 	}
 }
 
-func MetricHandler(exporter *Exporter, maxRequests int, logger log.Logger) http.HandlerFunc {
+func MetricHandler(exporter *Exporter, maxRequests int, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Use request context for cancellation when connection gets closed.
 		ctx := r.Context()
@@ -88,7 +85,7 @@ func MetricHandler(exporter *Exporter, maxRequests int, logger log.Logger) http.
 		if v := r.Header.Get(prometheusTimeoutHeader); v != "" {
 			timeoutSeconds, err := strconv.ParseFloat(v, 64)
 			if err != nil {
-				_ = level.Error(logger).Log("msg", "Failed to parse timeout from Prometheus header", "err", err)
+				logger.Error("Failed to parse timeout from Prometheus header", "err", err)
 			} else {
 				// Create new timeout context with request context as parent.
 				var cancel context.CancelFunc
@@ -104,7 +101,7 @@ func MetricHandler(exporter *Exporter, maxRequests int, logger log.Logger) http.
 
 		// Delegate http serving to Prometheus client library, which will call collector.Collect.
 		handler := promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{
-			ErrorLog:            stdlog.New(log.NewStdlibAdapter(level.Debug(logger)), "prom_log: ", 0),
+			ErrorLog:            slog.NewLogLogger(logger.Handler(), slog.LevelDebug),
 			ErrorHandling:       promhttp.ContinueOnError,
 			MaxRequestsInFlight: maxRequests,
 		})
@@ -142,7 +139,7 @@ func (e *Exporter) scrape(ctx context.Context, ch chan<- prometheus.Metric) {
 			label := collectorPrefix + scraper.Name()
 			sTime := time.Now()
 			if err = scraper.Scrape(ctx, &e.metrics, ch); err != nil {
-				_ = level.Error(e.logger).Log("msg", fmt.Sprintf("Error from: %s", scraper.Name()), "err", err)
+				e.logger.Error("Error from collector", "collector", scraper.Name(), "err", err)
 				e.metrics.ScrapeErrors.WithLabelValues(label).Inc()
 				e.metrics.Error.Set(1)
 			}
@@ -182,7 +179,7 @@ func NewMetrics() Metrics {
 	}
 }
 
-func registerCollector(collector string, isDefaultEnabled bool, factory func(logger log.Logger) (Collector, error)) {
+func registerCollector(collector string, isDefaultEnabled bool, factory func(logger *slog.Logger) (Collector, error)) {
 	collectorState[collector] = isDefaultEnabled
 	factories[collector] = factory
 }
