@@ -24,11 +24,11 @@ It is possible to use `UDP`, `TCP` or `ICMP` network protocols to sent package d
 The service collects metrics with `mtr` tool which accumulates functionality of `ping` and `traceroute` tools.
 Target hosts can be discovered automatically by retrieving all k8s cluster nodes.
 
-The list of metrics collected by `network-latency-exporter` can be found [here](/docs/public/metrics.md)
+The list of metrics collected by `network-latency-exporter` can be found [here](/docs/metrics.md)
 
 ## Documents
 
-* [Installation](docs/public/installation.md)
+* [Installation](docs/installation.md)
 
 ## Releases
 
@@ -58,7 +58,7 @@ Not applicable.
     helm install -n <namespace> network-latency-exporter charts/network-latency-exporter -f charts/network-latency-exporter/custom.values.yaml
     ```
 
-More details see in the [Installation Guide: Helm](docs/public/installation.md#using-helm).
+More details see in the [Installation Guide: Helm](docs/installation.md#using-helm).
 
 ### Smoke tests
 
@@ -92,7 +92,7 @@ To do it need:
 
     Or using the special tools like `kubectx` and `kubens` [https://github.com/ahmetb/kubectx](https://github.com/ahmetb/kubectx)
 
-3. Configure your IDE (VSCode) to build and run network-latency-exporter in debug mode:
+3. Configure your IDE (Visual Studio Code) to build and run network-latency-exporter in debug mode:
 
     ```json
     {
