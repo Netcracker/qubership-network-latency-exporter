@@ -31,7 +31,7 @@ func (s *shutdown) do() {
 	shtdwnCtx, cancel := context.WithTimeout(s.ctx, s.timeout)
 	defer cancel()
 	if err := s.srv.Shutdown(shtdwnCtx); err != nil {
-		s.logger.Info("Failed to shut down server gracefully", "timeout", s.timeout, "err", err)
+		s.logger.Error("Failed to shut down server gracefully", "timeout", s.timeout, "err", err)
 		s.logger.Info("Force closing server", "err", s.srv.Close())
 	}
 }
