@@ -195,28 +195,31 @@ func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, c
 				},
 				labels,
 			)
-			if i == 0 {
+
+			switch i {
+			case 0:
 				buildInfo.WithLabelValues(labelValues...).Set(float64(met.Fields.Status))
-			} else if i == 1 {
+			case 1:
 				buildInfo.WithLabelValues(labelValues...).Set(float64(met.Fields.TotalSent))
-			} else if i == 2 {
+			case 2:
 				buildInfo.WithLabelValues(labelValues...).Set(float64(met.Fields.TotalReceived))
-			} else if i == 3 {
+			case 3:
 				value, _ := strconv.ParseFloat(strconv.FormatFloat(met.Fields.RttMean, 'f', 2, 64), 64)
 				buildInfo.WithLabelValues(labelValues...).Set(value)
-			} else if i == 4 {
+			case 4:
 				value, _ := strconv.ParseFloat(strconv.FormatFloat(met.Fields.RttMin, 'f', 2, 64), 64)
 				buildInfo.WithLabelValues(labelValues...).Set(value)
-			} else if i == 5 {
+			case 5:
 				value, _ := strconv.ParseFloat(strconv.FormatFloat(met.Fields.RttMax, 'f', 2, 64), 64)
 				buildInfo.WithLabelValues(labelValues...).Set(value)
-			} else if i == 6 {
+			case 6:
 				value, _ := strconv.ParseFloat(strconv.FormatFloat(met.Fields.RttDeviation, 'f', 2, 64), 64)
 				buildInfo.WithLabelValues(labelValues...).Set(value)
-			} else {
+			default:
 				buildInfo.WithLabelValues(labelValues...).Set(float64(met.Fields.HopsNum))
 			}
-			buildInfo.MetricVec.Collect(ch)
+
+			buildInfo.Collect(ch)
 		}
 	}
 	return nil

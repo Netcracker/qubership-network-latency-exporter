@@ -38,7 +38,7 @@ func NewConfigContainer(latencyTypes []string, namespace string, logger *slog.Lo
 }
 
 func (c *Container) UpdateTargets(ctx context.Context, targets metrics.PingHostList) {
-	for _, latency := range c.ExporterConfig.LatencyTypes {
+	for _, latency := range c.LatencyTypes {
 		switch latency {
 		case string(NodeType):
 			nConfig := c.CollectorConfigs[latency]
@@ -72,7 +72,7 @@ func (c *Container) SetConfig(ctx context.Context, packetsSent string, packetSiz
 		c.CollectorConfigs = make(map[string]interface{})
 	}
 
-	for _, latency := range c.ExporterConfig.LatencyTypes {
+	for _, latency := range c.LatencyTypes {
 		switch latency {
 		case string(NodeType):
 			var nodeConfig model.NodeCollector
