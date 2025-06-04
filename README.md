@@ -92,7 +92,7 @@ To do it need:
 
     Or using the special tools like `kubectx` and `kubens` [https://github.com/ahmetb/kubectx](https://github.com/ahmetb/kubectx)
 
-3. Configure your IDE (VSCode) to build and run network-latency-exporter in debug mode:
+3. Configure your IDE (Visual Studio Code) to build and run network-latency-exporter in debug mode:
 
     ```json
     {
