@@ -2,12 +2,12 @@ package collector
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"testing"
 
 	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
 	"github.com/Netcracker/network-latency-exporter/pkg/utils"
-	"github.com/prometheus/common/promlog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,8 +47,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestLoad(t *testing.T) {
-	promLogConfig := &promlog.Config{}
-	logger := promlog.New(promLogConfig)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{}))
 	expected := &metrics.PingHostList{Targets: []metrics.PingHost{
 		{IPAddress: "1.2.3.4", Name: "node1"},
 		{IPAddress: "1.2.3.4", Name: ""},

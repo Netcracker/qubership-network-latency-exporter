@@ -3,7 +3,7 @@ package collector
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	"os/exec"
 	"reflect"
 	"strconv"
@@ -14,8 +14,6 @@ import (
 	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
 	"github.com/Netcracker/network-latency-exporter/pkg/model"
 	"github.com/Netcracker/network-latency-exporter/pkg/utils"
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -42,7 +40,7 @@ var (
 type NodeCollector struct {
 	Desc         *prometheus.Desc
 	ValueType    prometheus.ValueType
-	Logger       log.Logger
+	Logger       *slog.Logger
 	PacketsSent  string
 	PacketSize   string
 	ProbeTimeout string
@@ -58,7 +56,7 @@ func (nodeCollector *NodeCollector) Close() {
 	//nodeCollector.Resources = nodeCollector.Resources[:0]
 }
 
-func newNodeCollector(logger log.Logger) (Collector, error) {
+func newNodeCollector(logger *slog.Logger) (Collector, error) {
 	return &NodeCollector{
 		Desc: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "", NodeType.String()),
@@ -81,7 +79,6 @@ func (nodeCollector *NodeCollector) Initialize(ctx context.Context, config inter
 }
 
 func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, ch chan<- prometheus.Metric) error {
-
 	var m []*metrics.NetworkLatencyMetric
 	// Command line args to run MTR
 	mtrArgs := []string{
@@ -105,13 +102,13 @@ func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, c
 	//MTR takes approx 1 second for each packet sent
 	packets, er := strconv.Atoi(nodeConfig.PacketsSent)
 	if er != nil {
-		_ = level.Error(nodeCollector.Logger).Log("msg", fmt.Sprintf("Packets Sent has incorrect value %v", nodeConfig.PacketsSent))
+		nodeCollector.Logger.Error("Packets Sent has incorrect value", "value", nodeConfig.PacketsSent)
 	}
 
 	mtrTimeout := utils.GetEnvWithDefaultValue("MTR_TIMEOUT", "10")
 	extraTimeout, err := strconv.Atoi(mtrTimeout)
 	if err != nil {
-		_ = level.Error(nodeCollector.Logger).Log("msg", fmt.Sprintf("Error while converting timeout value %v", err))
+		nodeCollector.Logger.Error("Error while converting timeout value", "err", err)
 	}
 	timeout := (time.Duration(packets + extraTimeout)) * time.Second
 
@@ -119,7 +116,7 @@ func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, c
 	for _, tgt := range nodeConfig.Targets.Targets {
 		// Execute mtr for each protocol in separate gorutine
 		for _, protocol := range nodeConfig.CheckTargets {
-			_ = level.Debug(nodeCollector.Logger).Log("msg", fmt.Sprintf("Execute protocol %v on target %v", protocol, tgt.Name))
+			nodeCollector.Logger.Debug("Executing protocol on target", "protocol", protocol, "target", tgt.Name)
 			go func(t metrics.PingHost, p *metrics.CheckTarget) {
 				defer wg.Done()
 				// Prepare arguments for mtr
@@ -131,7 +128,7 @@ func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, c
 				args = append(args, t.IPAddress)
 
 				start := time.Now()
-				_ = level.Debug(nodeCollector.Logger).Log("msg", fmt.Sprintf("Execute mtr %v", args))
+				nodeCollector.Logger.Debug("Executing mtr", "args", args)
 
 				//Build context timeout with 10 seconds extra
 				ctxTimeout, cancel := context.WithTimeout(context.Background(), timeout)
@@ -140,11 +137,11 @@ func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, c
 				// Execute mtr
 				output, err := exec.CommandContext(ctxTimeout, "mtr", args...).Output()
 				if err != nil {
-					_ = level.Error(nodeCollector.Logger).Log("msg", "failed to run mtr process: "+err.Error())
+					nodeCollector.Logger.Error("Failed to run mtr process", "err", err)
 					execErr = err
 				}
 				if ctxTimeout.Err() == context.DeadlineExceeded {
-					_ = level.Error(nodeCollector.Logger).Log("msg", "Process timeout")
+					nodeCollector.Logger.Error("Process timeout")
 					execErr = ctxTimeout.Err()
 				}
 
@@ -152,11 +149,11 @@ func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, c
 				mtrOutput := &metrics.MtrOutput{}
 				err = json.Unmarshal(output, mtrOutput)
 				if err != nil {
-					_ = level.Error(nodeCollector.Logger).Log("msg", "Error while unmarshalling mtr output"+err.Error())
+					nodeCollector.Logger.Error("Error while unmarshalling mtr output", "err", err)
 					execErr = err
 				}
 				end := time.Now()
-				_ = level.Debug(nodeCollector.Logger).Log("msg", fmt.Sprintf("MTR output: %v. Finished in %v", mtrOutput, end.Sub(start)))
+				nodeCollector.Logger.Debug("MTR execution completed", "output", mtrOutput, "duration", end.Sub(start))
 
 				// Transform to metric.
 				// Read data from hop with host equals to target address.
@@ -198,28 +195,31 @@ func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, c
 				},
 				labels,
 			)
-			if i == 0 {
+
+			switch i {
+			case 0:
 				buildInfo.WithLabelValues(labelValues...).Set(float64(met.Fields.Status))
-			} else if i == 1 {
+			case 1:
 				buildInfo.WithLabelValues(labelValues...).Set(float64(met.Fields.TotalSent))
-			} else if i == 2 {
+			case 2:
 				buildInfo.WithLabelValues(labelValues...).Set(float64(met.Fields.TotalReceived))
-			} else if i == 3 {
+			case 3:
 				value, _ := strconv.ParseFloat(strconv.FormatFloat(met.Fields.RttMean, 'f', 2, 64), 64)
 				buildInfo.WithLabelValues(labelValues...).Set(value)
-			} else if i == 4 {
+			case 4:
 				value, _ := strconv.ParseFloat(strconv.FormatFloat(met.Fields.RttMin, 'f', 2, 64), 64)
 				buildInfo.WithLabelValues(labelValues...).Set(value)
-			} else if i == 5 {
+			case 5:
 				value, _ := strconv.ParseFloat(strconv.FormatFloat(met.Fields.RttMax, 'f', 2, 64), 64)
 				buildInfo.WithLabelValues(labelValues...).Set(value)
-			} else if i == 6 {
+			case 6:
 				value, _ := strconv.ParseFloat(strconv.FormatFloat(met.Fields.RttDeviation, 'f', 2, 64), 64)
 				buildInfo.WithLabelValues(labelValues...).Set(value)
-			} else {
+			default:
 				buildInfo.WithLabelValues(labelValues...).Set(float64(met.Fields.HopsNum))
 			}
-			buildInfo.MetricVec.Collect(ch)
+
+			buildInfo.Collect(ch)
 		}
 	}
 	return nil
