@@ -32,7 +32,7 @@ func Discover(logger *slog.Logger) *metrics.PingHostList {
 		logger.Debug("Discovering cluster nodes as ping targets")
 		rawNodes, err := getClusterNodes()
 		if err != nil {
-			logger.Debug("Error getting cluster nodes", "err", err)
+			logger.Error("Error getting cluster nodes", "err", err)
 			return nil
 		}
 
