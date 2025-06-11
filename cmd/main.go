@@ -177,7 +177,7 @@ func main() {
 		}
 		go sd.listen()
 		log.Info("Starting server", "address", srv.Addr)
-		exit := web.ListenAndServe(srv, webConfig, logger.NewKitLogger())
+		exit := web.ListenAndServe(srv, webConfig, logger.NewLogger())
 
 		cancel()
 		if !errors.Is(exit, http.ErrServerClosed) {
