@@ -98,6 +98,7 @@ func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, c
 	var wg sync.WaitGroup
 	wg.Add(len(nodeConfig.Targets.Targets) * len(nodeConfig.CheckTargets)) // how many gorutines need to wait before ending
 	var execErr error                                                      // to propagate error from a separated thread to the main thread
+	var mu sync.Mutex
 
 	//MTR takes approx 1 second for each packet sent
 	packets, er := strconv.Atoi(nodeConfig.PacketsSent)
@@ -171,7 +172,11 @@ func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, c
 						metric.Fields.RttDeviation = hop.RttDeviation
 					}
 				}
-				m = append(m, metric)
+				if metric != nil {
+					mu.Lock()
+					defer mu.Unlock()
+					m = append(m, metric)
+				}
 			}(tgt, protocol)
 		}
 	}
@@ -185,6 +190,9 @@ func (nodeCollector *NodeCollector) Scrape(ctx context.Context, mets *Metrics, c
 
 	metric_names := []string{"_status", "_sent", "_received", "_rtt_mean", "_rtt_min", "_rtt_max", "_rtt_stddev", "_hops_num"}
 	for _, met := range m {
+		if met == nil {
+			continue
+		}
 		labels := []string{"source", "destination", "destinationIp", "packets", "protocol", "port"}
 		labelValues := []string{nodeName, met.Tags.Dest, met.Tags.DestIp, strconv.Itoa(met.Fields.TotalSent), met.Tags.Protocol, met.Tags.Port}
 		for i, metricName := range metric_names {
