@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/metrics"
 
 	"log/slog"
 

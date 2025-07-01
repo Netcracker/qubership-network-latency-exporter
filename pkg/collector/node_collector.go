@@ -11,9 +11,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
-	"github.com/Netcracker/network-latency-exporter/pkg/model"
-	"github.com/Netcracker/network-latency-exporter/pkg/utils"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/metrics"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/model"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/utils"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 )

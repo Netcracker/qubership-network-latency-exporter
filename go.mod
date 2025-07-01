@@ -1,4 +1,4 @@
-module github.com/Netcracker/network-latency-exporter
+module github.com/Netcracker/qubership-network-latency-exporter
 
 go 1.24.0
 

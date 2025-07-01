@@ -31,7 +31,7 @@ else
 endif
 
 # The import path
-NETWORK_LATENCY_EXPORTER_PKG=github.com/Netcracker/network-latency-exporter
+NETWORK_LATENCY_EXPORTER_PKG=github.com/Netcracker/qubership-network-latency-exporter
 
 # The ldflags for the go build process to set the version related data.
 GO_BUILD_LDFLAGS=\
