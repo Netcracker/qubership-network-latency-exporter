@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/metrics"
 	"k8s.io/client-go/kubernetes"
 )
 

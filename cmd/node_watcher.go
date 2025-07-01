@@ -5,8 +5,8 @@ import (
 
 	"log/slog"
 
-	"github.com/Netcracker/network-latency-exporter/pkg/collector"
-	"github.com/Netcracker/network-latency-exporter/pkg/utils"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/collector"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/utils"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/watch"
 )
