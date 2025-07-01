@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
-	"github.com/Netcracker/network-latency-exporter/pkg/utils"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/metrics"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/utils"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

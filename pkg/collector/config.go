@@ -6,8 +6,8 @@ import (
 
 	"log/slog"
 
-	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
-	"github.com/Netcracker/network-latency-exporter/pkg/model"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/metrics"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/model"
 	"github.com/pkg/errors"
 )
 

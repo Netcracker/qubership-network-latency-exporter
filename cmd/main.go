@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Netcracker/network-latency-exporter/pkg/collector"
-	"github.com/Netcracker/network-latency-exporter/pkg/logger"
-	"github.com/Netcracker/network-latency-exporter/pkg/metrics"
-	"github.com/Netcracker/network-latency-exporter/pkg/utils"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/collector"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/logger"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/metrics"
+	"github.com/Netcracker/qubership-network-latency-exporter/pkg/utils"
 
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus"
