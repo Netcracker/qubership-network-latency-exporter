@@ -9,7 +9,7 @@ require (
 	github.com/go-kit/log v0.2.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.22.0
-	github.com/prometheus/common v0.64.0
+	github.com/prometheus/common v0.65.0
 	github.com/prometheus/exporter-toolkit v0.14.0
 	github.com/stretchr/testify v1.10.0
 	k8s.io/api v0.33.2
