@@ -235,7 +235,7 @@ This section describes the `network-latency-exporter` parameters for [install wi
 Parameters should be set in your `values.yaml` used when running `helm install` and `helm upgrade` commands.
 
 To see all configurable options with default values, visit the
-chart's [values.yaml](../../charts/network-latency-exporter/values.yaml), or run these configuration commands:
+chart's [values.yaml](../charts/network-latency-exporter/values.yaml), or run these configuration commands:
 
 ```bash
 helm show values charts/network-latency-exporter
