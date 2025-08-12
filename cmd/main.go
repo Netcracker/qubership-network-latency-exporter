@@ -19,6 +19,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	versionCollector "github.com/prometheus/client_golang/prometheus/collectors/version"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/promslog"
+	"github.com/prometheus/common/promslog/flag"
 	"github.com/prometheus/common/version"
 	"github.com/prometheus/exporter-toolkit/web"
 	webflag "github.com/prometheus/exporter-toolkit/web/kingpinflag"
@@ -50,13 +52,15 @@ func main() {
 		).Default("40").Int()
 	)
 
+	promsLogConfig := &promslog.Config{}
+	flag.AddFlags(kingpin.CommandLine, promsLogConfig)
 	kingpin.Version(version.Print("network_latency_exporter"))
 	kingpin.CommandLine.UsageWriter(os.Stdout)
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
 	// Create a new slog logger with configured level and format
-	log := logger.NewLogger()
+	log := promslog.New(promsLogConfig)
 
 	_ = os.Setenv("LOG_LEVEL", logger.GetLogLevel().String())
 
