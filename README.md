@@ -24,7 +24,7 @@ It is possible to use `UDP`, `TCP` or `ICMP` network protocols to sent package d
 The service collects metrics with `mtr` tool which accumulates functionality of `ping` and `traceroute` tools.
 Target hosts can be discovered automatically by retrieving all k8s cluster nodes.
 
-The list of metrics collected by `network-latency-exporter` can be found [here](/docs/metrics.md)
+The list of metrics collected by `network-latency-exporter` can be found [in metrics doc](/docs/metrics.md)
 
 ## Documents
 
