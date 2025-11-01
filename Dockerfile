@@ -20,7 +20,7 @@ RUN go mod download -x
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build -a -o /build/network-latency-exporter ./cmd/
 
 # Use alpine tiny images as a base
-FROM alpine:3.22.1
+FROM alpine:3.22.2
 
 # Set UID and user name
 ENV USER_UID=2001 \
