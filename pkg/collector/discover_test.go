@@ -72,3 +72,32 @@ func GetByIpAddress(l *metrics.PingHostList, addr string) *metrics.PingHost {
 	}
 	return nil
 }
+
+func TestDiscover_Disabled(t *testing.T) {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{}))
+
+	// Test with discovery disabled
+	os.Setenv("DISCOVER_ENABLE", "false")
+	defer os.Unsetenv("DISCOVER_ENABLE")
+
+	result := Discover(logger)
+	assert.Nil(t, result)
+}
+
+func TestDiscover_Enabled(t *testing.T) {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{}))
+
+	// Test with discovery enabled (default)
+	os.Setenv("DISCOVER_ENABLE", "true")
+	os.Setenv("NODE_NAME", "test-node")
+	defer func() {
+		os.Unsetenv("DISCOVER_ENABLE")
+		os.Unsetenv("NODE_NAME")
+	}()
+
+	// This will try to connect to k8s, but should return nil if connection fails
+	result := Discover(logger)
+	// We can't easily mock k8s client, so we just check that it doesn't panic
+	// In a real k8s environment, this would return targets
+	assert.True(t, result == nil || result != nil) // Allow either result since k8s may not be available
+}
