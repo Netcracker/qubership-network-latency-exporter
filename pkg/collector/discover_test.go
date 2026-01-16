@@ -77,8 +77,8 @@ func TestDiscover_Disabled(t *testing.T) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{}))
 
 	// Test with discovery disabled
-	os.Setenv("DISCOVER_ENABLE", "false")
-	defer os.Unsetenv("DISCOVER_ENABLE")
+	_ = os.Setenv("DISCOVER_ENABLE", "false")
+	defer func() { _ = os.Unsetenv("DISCOVER_ENABLE") }()
 
 	result := Discover(logger)
 	assert.Nil(t, result)
@@ -88,11 +88,11 @@ func TestDiscover_Enabled(t *testing.T) {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{}))
 
 	// Test with discovery enabled (default)
-	os.Setenv("DISCOVER_ENABLE", "true")
-	os.Setenv("NODE_NAME", "test-node")
+	_ = os.Setenv("DISCOVER_ENABLE", "true")
+	_ = os.Setenv("NODE_NAME", "test-node")
 	defer func() {
-		os.Unsetenv("DISCOVER_ENABLE")
-		os.Unsetenv("NODE_NAME")
+		_ = os.Unsetenv("DISCOVER_ENABLE")
+		_ = os.Unsetenv("NODE_NAME")
 	}()
 
 	// This will try to connect to k8s, but should return nil if connection fails

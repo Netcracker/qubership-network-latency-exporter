@@ -111,7 +111,8 @@ func TestContainer_GetConfig(t *testing.T) {
 	ctx := context.Background()
 	targets := metrics.PingHostList{Targets: []metrics.PingHost{{IPAddress: "1.2.3.4", Name: "node1"}}}
 
-	container.SetConfig(ctx, "10", "1500", "3", nil, targets, "/metrics")
+	err := container.SetConfig(ctx, "10", "1500", "3", nil, targets, "/metrics")
+	assert.NoError(t, err)
 
 	// Test getting existing config
 	config := container.GetConfig(ctx, NodeType)

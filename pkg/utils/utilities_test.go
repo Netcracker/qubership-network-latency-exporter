@@ -14,13 +14,13 @@ import (
 
 func TestGetEnvWithDefaultValue(t *testing.T) {
 	// Test with existing env var
-	os.Setenv("TEST_VAR", "value")
-	defer os.Unsetenv("TEST_VAR")
+	_ = os.Setenv("TEST_VAR", "value")
+	defer func() { _ = os.Unsetenv("TEST_VAR") }()
 	assert.Equal(t, "value", GetEnvWithDefaultValue("TEST_VAR", "default"))
 
 	// Test with empty env var
-	os.Setenv("TEST_EMPTY", "")
-	defer os.Unsetenv("TEST_EMPTY")
+	_ = os.Setenv("TEST_EMPTY", "")
+	defer func() { _ = os.Unsetenv("TEST_EMPTY") }()
 	assert.Equal(t, "default", GetEnvWithDefaultValue("TEST_EMPTY", "default"))
 
 	// Test with non-existing env var
