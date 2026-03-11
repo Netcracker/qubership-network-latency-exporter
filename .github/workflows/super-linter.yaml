@@ -88,6 +88,17 @@ jobs:
           grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
         fi
 
+    # Setup Go environment and build the operator to make sure all dependencies are in place for linters
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version-file: go.mod
+        check-latest: true
+    - name: Prepare workspace
+      shell: bash
+      run: |
+        go mod tidy
+
     - name: Lint Code Base
       uses: super-linter/super-linter/slim@61abc07d755095a68f4987d1c2c3d1d64408f1f9 # v8.5.0
       env:
@@ -95,4 +106,3 @@ jobs:
         # To report GitHub Actions status checks
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DEFAULT_BRANCH: ${{ github.event.pull_request.base.ref || github.event.push.ref }}
-
