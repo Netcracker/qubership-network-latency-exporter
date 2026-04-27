@@ -64,7 +64,7 @@ jobs:
           persist-credentials: false
 
       - name: Get Configuration File
-        uses: netcracker/qubership-workflow-hub/actions/docker-config-resolver@5a557213e92e3d22d0292330c4817c82af6704d2 #v2.1.2
+        uses: netcracker/qubership-workflow-hub/actions/docker-config-resolver@e64a1ee2fc2f68ab44a4ef416c27d83ce36ba8e1 #v2.2.1
         id: config
         with:
           file-path: ".qubership/docker.cfg"
@@ -101,7 +101,7 @@ jobs:
         tag: ${{ case(github.event_name == 'workflow_dispatch', fromJson(format('["{0}"]', inputs.tag)), fromJson('["latest","main"]')) }}
 
     name: "Run Security Scan (matrix)"
-    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@5a557213e92e3d22d0292330c4817c82af6704d2 #v2.1.2
+    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@e64a1ee2fc2f68ab44a4ef416c27d83ce36ba8e1 #v2.2.1
     with:
       target: ${{ inputs.target || 'docker' }}
       image: ${{ format('{0}:{1}', matrix.package.path, matrix.tag) }}
@@ -119,7 +119,7 @@ jobs:
       packages: read
       contents: read
     name: "Run Security Scan (single image)"
-    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@5a557213e92e3d22d0292330c4817c82af6704d2 #v2.1.2
+    uses: netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@e64a1ee2fc2f68ab44a4ef416c27d83ce36ba8e1 #v2.2.1
     with:
       target: ${{ inputs.target || 'docker' }}
       image: ${{ inputs.image }}
