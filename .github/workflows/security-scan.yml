@@ -58,19 +58,10 @@ jobs:
       packages: ${{ steps.ghcr.outputs.packages }}
       has-packages: ${{ steps.ghcr.outputs.has-packages }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
+      - name: List GHCR packages for this repo
+        id: ghcr
+        uses: Netcracker/qubership-workflow-hub/actions/ghcr-discover-repo-packages@e64a1ee2fc2f68ab44a4ef416c27d83ce36ba8e1 #v2.2.1
 
-      - name: Get Configuration File
-        uses: netcracker/qubership-workflow-hub/actions/docker-config-resolver@e64a1ee2fc2f68ab44a4ef416c27d83ce36ba8e1 #v2.2.1
-        id: config
-        with:
-          file-path: ".qubership/docker.cfg"
-
-      - name: Display Resolved Configuration
-        id: display-config
         env:
           GH_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
