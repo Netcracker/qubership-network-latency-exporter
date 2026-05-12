@@ -1,6 +1,6 @@
 # hadolint global ignore=DL3018
 # Build the manager binary
-FROM --platform=$BUILDPLATFORM golang:1.26.2-alpine3.22 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.3-alpine3.22 AS builder
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
