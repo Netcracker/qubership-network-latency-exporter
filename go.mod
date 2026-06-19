@@ -1,6 +1,7 @@
 module github.com/Netcracker/qubership-network-latency-exporter
 
 go 1.26.0
+
 toolchain go1.26.4
 
 require (
@@ -11,9 +12,9 @@ require (
 	github.com/prometheus/common v0.68.1
 	github.com/prometheus/exporter-toolkit v0.16.0
 	github.com/stretchr/testify v1.11.1
-	k8s.io/api v0.36.1
-	k8s.io/apimachinery v0.36.1
-	k8s.io/client-go v0.36.1
+	k8s.io/api v0.36.2
+	k8s.io/apimachinery v0.36.2
+	k8s.io/client-go v0.36.2
 	sigs.k8s.io/controller-runtime v0.24.1
 )
 
