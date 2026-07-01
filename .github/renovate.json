@@ -8,9 +8,7 @@
   "prHourlyLimit": 0,
   "packageRules": [
     {
-      "matchManagers": [
-        "github-actions"
-      ],
+      "matchManagers": ["github-actions"],
       "groupName": "actions-deps"
     },
     {
