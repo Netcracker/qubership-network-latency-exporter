@@ -1,6 +1,6 @@
 # hadolint global ignore=DL3018
 # Build the manager binary
-FROM --platform=$BUILDPLATFORM golang:1.26.4-alpine3.22 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.26.4-alpine3.22@sha256:727cfc3c40be55cd1bc9a4a059406b28a059857e3be752aa9d09531e12c20c56 AS builder
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
@@ -20,7 +20,7 @@ RUN go mod download -x
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} GO111MODULE=on go build -a -o /build/network-latency-exporter ./cmd/
 
 # Use alpine tiny images as a base
-FROM alpine:3.24.1
+FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
 
 # Set UID and user name
 ENV USER_UID=2001 \
