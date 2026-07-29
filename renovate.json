@@ -16,7 +16,10 @@
         "dockerfile"
       ],
       "matchPackageNames": [
-        "!golang"
+        "!golang",
+        "!docker.io/library/golang",
+        "!index.docker.io/library/golang",
+        "!registry-1.docker.io/library/golang"
       ],
       "groupName": "Docker images"
     }
