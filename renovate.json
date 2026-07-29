@@ -15,6 +15,9 @@
       "matchManagers": [
         "dockerfile"
       ],
+      "matchPackageNames": [
+        "!golang"
+      ],
       "groupName": "Docker images"
     }
   ]
