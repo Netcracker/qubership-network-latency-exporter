@@ -2,7 +2,7 @@ module github.com/Netcracker/qubership-network-latency-exporter
 
 go 1.26.0
 
-toolchain go1.26.5
+toolchain go1.26.6
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
