@@ -34,7 +34,7 @@ jobs:
   test:
     needs: prepare
     name: Build and test with coverage
-    uses: IldarMinaev/qubership-core-infra/.github/workflows/generic-go-build.yaml@c32c1d2c7d17dc6c86b95491456130109617e907 # PR #368 canary
+    uses: IldarMinaev/qubership-core-infra/.github/workflows/generic-go-build.yaml@738a91c79f85dc019cad7344de2c4cc9ada49a5b # PR #368 canary
     with:
       sonar-project-key: ${{ needs.prepare.outputs.sonar-project-key }}
       dry-run: true
@@ -45,7 +45,7 @@ jobs:
 
   direct-docker-dry-run:
     name: Direct Docker dry run with a package-write caller ceiling
-    uses: IldarMinaev/qubership-core-infra/.github/workflows/docker-build.yaml@c32c1d2c7d17dc6c86b95491456130109617e907 # PR #368 canary
+    uses: IldarMinaev/qubership-core-infra/.github/workflows/docker-build.yaml@738a91c79f85dc019cad7344de2c4cc9ada49a5b # PR #368 canary
     with:
       dry-run: true
     permissions:
