@@ -34,7 +34,7 @@ jobs:
   test:
     needs: prepare
     name: Build and test with coverage
-    uses: IldarMinaev/qubership-core-infra/.github/workflows/generic-go-build.yaml@589943393b485f9d2c85d0a80471b1ee14d4e817 # PR #368 canary
+    uses: IldarMinaev/qubership-core-infra/.github/workflows/generic-go-build.yaml@228ade7236e71ee28e1e1d4c0f0525c865253e00 # PR #368 canary
     with:
       sonar-project-key: ${{ needs.prepare.outputs.sonar-project-key }}
       dry-run: true
