@@ -1,0 +1,10 @@
+{
+  "components": [
+    {
+      "name": "qubership-network-latency-exporter",
+      "file": "./Dockerfile",
+      "context": "."
+    }
+  ],
+  "platforms": "linux/amd64"
+}
